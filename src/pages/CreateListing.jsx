@@ -6,6 +6,7 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from 'firebase/storage';
+import {addDoc, collection, serverTimestamp} from 'firebase/firestore'
 import {db} from '../firebase.config';
 import {useNavigate} from 'react-router-dom';
 import {toast} from 'react-toastify';
@@ -86,7 +87,7 @@ function CreateListing() {
       return
     }
 
-    let location
+    let location;
 
     if(geolocationEnabled) {
       const response = await fetch(
@@ -97,8 +98,10 @@ function CreateListing() {
 
       setFormData((prevState) => ({
         ...prevState,
-        latitude: data.data[0]?.latitude ?? 0,
-        longitude: data.data[0]?.longitude ?? 0,
+        geolocation: {
+          latitude: data.data[0]?.latitude ?? 0,
+          longitude: data.data[0]?.longitude ?? 0,
+        }
       }),
         location = data.data[0]
         ? data.data[0]?.label
@@ -161,9 +164,22 @@ function CreateListing() {
       return
     })
 
-    console.log(imgUrls);
+    const formDataCopy = {
+      ...formData,
+      imgUrls,
+      timestamp: serverTimestamp()
+    }
 
+    //CleanUp
+    delete formDataCopy.images
+    delete formDataCopy.address
+    location && (formDataCopy.location = location)
+    !formDataCopy.offer && delete formDataCopy.discountedPrice
+
+    const docRef = await addDoc(collection(db, 'listings'), formDataCopy)
     setLoading(false);
+    toast.success('Listing saved')
+    navigate(`/category/${formDataCopy.type}/${docRef.id}`)
   }
 
   const onMutate = (e) => {
