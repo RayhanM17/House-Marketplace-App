@@ -88,6 +88,7 @@ function CreateListing() {
     }
 
     let location;
+    let geolocation;
 
     if(geolocationEnabled) {
       const response = await fetch(
@@ -96,17 +97,15 @@ function CreateListing() {
 
       const data = await response.json();
 
-      setFormData((prevState) => ({
-        ...prevState,
-        geolocation: {
-          latitude: data.data[0]?.latitude ?? 0,
-          longitude: data.data[0]?.longitude ?? 0,
-        }
-      }),
-        location = data.data[0]
+      
+      geolocation = {
+        lat: data.data[0]?.latitude ?? 0,
+        lng: data.data[0]?.longitude ?? 0
+      }
+      location = data.data[0]
         ? data.data[0]?.label
         : undefined
-      )
+      
         
       if(location === undefined || location.includes('undefined')){
         setLoading(false)
@@ -166,6 +165,7 @@ function CreateListing() {
 
     const formDataCopy = {
       ...formData,
+      geolocation,
       imgUrls,
       timestamp: serverTimestamp()
     }
